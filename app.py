@@ -4,10 +4,12 @@ import re
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+from functools import wraps
 
 import pandas as pd
-from flask import Flask, flash, g, redirect, render_template, request, send_file, url_for
+from flask import Flask, flash, g, redirect, render_template, request, send_file, url_for, session
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / 'app.db'
@@ -143,6 +145,13 @@ def init_db():
     db = sqlite3.connect(DB_PATH)
     db.executescript(
         '''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS uploaded_files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             label TEXT NOT NULL,
@@ -190,6 +199,33 @@ def init_db():
     )
     db.commit()
     db.close()
+
+
+# =========================================================
+# AUTENTICAÇÃO
+# =========================================================
+def login_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Faça login para acessar o sistema.', 'warning')
+            return redirect(url_for('login'))
+        return view_func(*args, **kwargs)
+    return wrapped_view
+
+
+def get_user_by_username(username):
+    db = get_db()
+    return db.execute(
+        'SELECT * FROM users WHERE username = ?',
+        (username,)
+    ).fetchone()
+
+
+def has_any_user():
+    db = get_db()
+    row = db.execute('SELECT COUNT(*) AS total FROM users').fetchone()
+    return (row['total'] if row else 0) > 0
 
 
 # =========================================================
@@ -820,9 +856,89 @@ def get_stats():
 
 
 # =========================================================
+# ROTAS DE AUTENTICAÇÃO
+# =========================================================
+@app.route('/setup', methods=['GET', 'POST'])
+def setup():
+    if has_any_user():
+        flash('Já existe usuário cadastrado. Faça login.', 'warning')
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        username = (request.form.get('username') or '').strip()
+        password = request.form.get('password') or ''
+        confirm_password = request.form.get('confirm_password') or ''
+
+        if not username:
+            flash('Informe um nome de usuário.', 'warning')
+            return redirect(url_for('setup'))
+
+        if len(password) < 4:
+            flash('A senha deve ter pelo menos 4 caracteres.', 'warning')
+            return redirect(url_for('setup'))
+
+        if password != confirm_password:
+            flash('A confirmação da senha não confere.', 'warning')
+            return redirect(url_for('setup'))
+
+        db = get_db()
+        db.execute(
+            '''
+            INSERT INTO users (username, password_hash, created_at)
+            VALUES (?, ?, ?)
+            ''',
+            (
+                username,
+                generate_password_hash(password),
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            )
+        )
+        db.commit()
+
+        flash('Usuário criado com sucesso. Faça login.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('setup.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if not has_any_user():
+        flash('Nenhum usuário cadastrado. Crie o primeiro acesso.', 'warning')
+        return redirect(url_for('setup'))
+
+    if request.method == 'POST':
+        username = (request.form.get('username') or '').strip()
+        password = request.form.get('password') or ''
+
+        user = get_user_by_username(username)
+
+        if user is None or not check_password_hash(user['password_hash'], password):
+            flash('Usuário ou senha inválidos.', 'danger')
+            return redirect(url_for('login'))
+
+        session.clear()
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+
+        flash('Login realizado com sucesso.', 'success')
+        return redirect(url_for('index'))
+
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Você saiu do sistema.', 'success')
+    return redirect(url_for('login'))
+
+
+# =========================================================
 # ROTAS
 # =========================================================
 @app.route('/')
+@login_required
 def index():
     return render_template(
         'index.html',
@@ -835,6 +951,7 @@ def index():
 
 
 @app.route('/upload', methods=['POST'])
+@login_required
 def upload():
     arquivo_a = request.files.get('arquivo_a')
     arquivo_b = request.files.get('arquivo_b')
@@ -864,6 +981,7 @@ def upload():
 
 
 @app.route('/scan', methods=['POST'])
+@login_required
 def scan():
     scanned_code = (request.form.get('scanned_code') or '').strip()
 
@@ -881,6 +999,7 @@ def scan():
 
 
 @app.route('/download/<int:file_id>')
+@login_required
 def download_file(file_id):
     db = get_db()
     row = db.execute(
@@ -901,6 +1020,7 @@ def download_file(file_id):
 
 
 @app.route('/export/bipes.xlsx')
+@login_required
 def export_scans_excel():
     db = get_db()
     rows = db.execute('SELECT * FROM scans ORDER BY id DESC').fetchall()
@@ -974,6 +1094,7 @@ def export_scans_excel():
 
 
 @app.route('/export/comparativo.xlsx')
+@login_required
 def export_comparison_excel():
     db = get_db()
     rows = db.execute('SELECT * FROM scans ORDER BY id DESC').fetchall()

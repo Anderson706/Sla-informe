@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Login | DHL Security Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root{
+      --dhl-yellow:#ffcc00;
+      --dhl-red:#d40511;
+      --dhl-red-dark:#b3030e;
+      --dhl-black:#1f1f1f;
+      --bg:#f4f5f7;
+      --card:#ffffff;
+      --line:#e5e7eb;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --shadow:0 16px 36px rgba(0,0,0,.12);
+      --radius:22px;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(255,204,0,.22), transparent 22%),
+        linear-gradient(180deg, #fafafa 0%, #f4f5f7 100%);
+      min-height:100vh;
+    }
+
+    .topbar{
+      height:8px;
+      background:linear-gradient(90deg,var(--dhl-red) 0%, var(--dhl-red) 22%, var(--dhl-yellow) 22%, var(--dhl-yellow) 100%);
+      box-shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+
+    .page{
+      min-height:calc(100vh - 8px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .card{
+      width:100%;
+      max-width:460px;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .card-header{
+      background:
+        linear-gradient(135deg, rgba(212,5,17,.98), rgba(145,0,10,.96)),
+        linear-gradient(135deg,#d40511,#aa000d);
+      color:#fff;
+      padding:22px 22px 18px;
+      position:relative;
+    }
+
+    .card-header::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 90% 20%, rgba(255,204,0,.28), transparent 18%);
+      pointer-events:none;
+    }
+
+    .logo-wrap{
+      position:relative;
+      z-index:1;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .logo-box{
+      background:#fff;
+      border-radius:12px;
+      padding:8px 12px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 6px 14px rgba(0,0,0,.12);
+    }
+
+    .logo-box img{
+      display:block;
+      max-height:34px;
+      width:auto;
+    }
+
+    .logo-fallback{
+      font-weight:900;
+      font-size:22px;
+      color:var(--dhl-red);
+      letter-spacing:.4px;
+      line-height:1;
+    }
+
+    .card-header h1{
+      position:relative;
+      z-index:1;
+      margin:0;
+      font-size:28px;
+      font-weight:800;
+    }
+
+    .card-header p{
+      position:relative;
+      z-index:1;
+      margin:8px 0 0;
+      font-size:14px;
+      opacity:.95;
+      line-height:1.45;
+    }
+
+    .card-body{
+      padding:22px;
+    }
+
+    .flash-wrap{
+      display:grid;
+      gap:10px;
+      margin-bottom:16px;
+    }
+
+    .flash{
+      padding:12px 14px;
+      border-radius:14px;
+      font-size:14px;
+      font-weight:700;
+      border:1px solid transparent;
+    }
+
+    .flash.success{
+      background:#ecfdf3;
+      color:#166534;
+      border-color:#b7ebc6;
+    }
+
+    .flash.warning{
+      background:#fffbeb;
+      color:#92400e;
+      border-color:#fde68a;
+    }
+
+    .flash.danger{
+      background:#fef2f2;
+      color:#991b1b;
+      border-color:#fecaca;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom:14px;
+    }
+
+    .field label{
+      font-size:13px;
+      font-weight:800;
+      color:var(--muted);
+      letter-spacing:.2px;
+    }
+
+    .field input{
+      width:100%;
+      border:1px solid #d6dae1;
+      background:#fff;
+      border-radius:14px;
+      padding:13px 14px;
+      font-size:14px;
+      outline:none;
+      transition:.18s ease;
+    }
+
+    .field input:focus{
+      border-color:#f2b700;
+      box-shadow:0 0 0 4px rgba(255,204,0,.22);
+    }
+
+    .btn{
+      width:100%;
+      border:none;
+      border-radius:14px;
+      padding:13px 16px;
+      cursor:pointer;
+      font-weight:800;
+      font-size:14px;
+      background:linear-gradient(180deg,var(--dhl-red),var(--dhl-red-dark));
+      color:#fff;
+      box-shadow:0 8px 18px rgba(0,0,0,.10);
+      transition:.18s ease;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+    }
+
+    .footer-note{
+      margin-top:14px;
+      font-size:12px;
+      color:var(--muted);
+      text-align:center;
+      line-height:1.45;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar"></div>
+
+  <div class="page">
+    <div class="card">
+      <div class="card-header">
+        <div class="logo-wrap">
+          <div class="logo-box">
+            <img
+              src="{{ url_for('static', filename='img/dhl_logo.png') }}"
+              alt="DHL"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+            >
+            <div class="logo-fallback" style="display:none;">DHL</div>
+          </div>
+        </div>
+
+        <h1>Login</h1>
+        <p>Acesse o painel de comparativo operacional e rastreabilidade.</p>
+      </div>
+
+      <div class="card-body">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-wrap">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="post">
+          <div class="field">
+            <label>Usuário</label>
+            <input type="text" name="username" autocomplete="username" required autofocus>
+          </div>
+
+          <div class="field">
+            <label>Senha</label>
+            <input type="password" name="password" autocomplete="current-password" required>
+          </div>
+
+          <button type="submit" class="btn">Entrar no sistema</button>
+        </form>
+
+        <div class="footer-note">
+          DHL Security Dashboard · Acesso restrito
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -648,7 +648,11 @@
           <h1>Comparativo de códigos</h1>
           <p>Controle visual no padrão DHL para importação do Arquivo A e Arquivo B, bipagem rápida, análise temporal por etapas, SLA de 24 horas e histórico operacional completo.</p>
         </div>
-        <div class="hero-badge">DHL Security Dashboard</div>
+        <div class="hero-badge">
+          DHL Security Dashboard<br>
+          <span style="font-size:12px;">{{ session.get('username', 'Usuário') }}</span> |
+          <a href="{{ url_for('logout') }}" style="color:#fff7cf; text-decoration:none;">Sair</a>
+        </div>
       </div>
     </div>
 
