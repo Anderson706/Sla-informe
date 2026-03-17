@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or 'Comparativo de Códigos - DHL' }}</title>
+  <style>
+    :root{
+      --dhl-yellow:#ffcc00;
+      --dhl-red:#d40511;
+      --bg:#f5f6f8;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --card:#ffffff;
+      --shadow:0 10px 28px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#fff6cc,#f5f6f8 220px);color:var(--text)}
+    .topbar{background:linear-gradient(90deg,var(--dhl-yellow),#ffd84d);border-bottom:4px solid var(--dhl-red);padding:14px 22px;font-weight:900}
+    .topbar span{color:var(--dhl-red)}
+    .container,.container-fluid{max-width:none !important}
+    .page-wrap{width:calc(100vw - 48px);max-width:1600px;margin:20px auto;padding:0 4px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:18px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;border-radius:12px;border:1px solid transparent;cursor:pointer;text-decoration:none;font-weight:700}
+    .btn-dark{background:var(--dhl-red);color:#fff}
+    .btn-outline{background:#fff;border-color:var(--border);color:var(--text)}
+    .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;font-size:12px}
+    .muted{color:var(--muted)}
+    .flash-wrap{display:grid;gap:10px;margin-bottom:14px}
+    .flash{padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:#fff}
+    .flash.success{background:#e9fbe9;border-color:#b7e7b7}
+    .flash.warning{background:#fff6db;border-color:#ffe08a}
+    .flash.danger{background:#ffecec;border-color:#ffb2b2}
+    .flash.info{background:#eef6ff;border-color:#b7d9ff}
+    input, textarea{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:#fff}
+  </style>
+</head>
+<body>
+  <div class="topbar">DHL <span>Security &amp; Loss Prevention</span> · Comparativo de Códigos Bipados</div>
+  <main class="page-wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-wrap">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block body %}{% endblock %}
+  </main>
+</body>
+</html>

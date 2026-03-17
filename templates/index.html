@@ -1,0 +1,1293 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Comparativo Arquivo A x Arquivo B</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root{
+      --dhl-yellow:#ffcc00;
+      --dhl-red:#d40511;
+      --dhl-red-dark:#b3030e;
+      --dhl-black:#1f1f1f;
+      --dhl-gray:#5f6368;
+      --bg:#f4f5f7;
+      --card:#ffffff;
+      --line:#e5e7eb;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --shadow:0 10px 24px rgba(0,0,0,.08);
+      --radius:18px;
+
+      --ok-bg:#e8f7ee;
+      --ok-text:#146c43;
+
+      --warn-bg:#fff4db;
+      --warn-text:#9a6700;
+
+      --danger-bg:#fde8ea;
+      --danger-text:#b42318;
+
+      --neutral-bg:#eef1f4;
+      --neutral-text:#3f4a5a;
+
+      --time-good-bg:#ecfdf3;
+      --time-good-text:#166534;
+
+      --time-mid-bg:#fff7e6;
+      --time-mid-text:#9a6700;
+
+      --time-high-bg:#fff1f2;
+      --time-high-text:#b42318;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(255,204,0,.18), transparent 22%),
+        linear-gradient(180deg, #fafafa 0%, #f4f5f7 100%);
+      color:var(--text);
+    }
+
+    .topbar{
+      height:8px;
+      background:linear-gradient(90deg,var(--dhl-red) 0%, var(--dhl-red) 22%, var(--dhl-yellow) 22%, var(--dhl-yellow) 100%);
+      box-shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+
+    .wrap{
+      width:min(1680px, calc(100vw - 28px));
+      margin:18px auto 28px;
+    }
+
+    .hero{
+      position:relative;
+      overflow:hidden;
+      background:
+        linear-gradient(135deg, rgba(212,5,17,.98), rgba(145,0,10,.96)),
+        linear-gradient(135deg,#d40511,#aa000d);
+      color:#fff;
+      border-radius:24px;
+      padding:24px;
+      box-shadow:var(--shadow);
+      margin-bottom:18px;
+      border:1px solid rgba(255,255,255,.14);
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 85% 20%, rgba(255,204,0,.32), transparent 18%),
+        radial-gradient(circle at 70% 80%, rgba(255,255,255,.08), transparent 18%);
+      pointer-events:none;
+    }
+
+    .hero-content{
+      position:relative;
+      z-index:1;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+
+    .hero h1{
+      margin:0 0 8px 0;
+      font-size:30px;
+      line-height:1.1;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+
+    .hero p{
+      margin:0;
+      opacity:.96;
+      max-width:900px;
+      line-height:1.45;
+    }
+
+    .hero-badge{
+      background:rgba(255,204,0,.18);
+      border:1px solid rgba(255,204,0,.38);
+      color:#fff7cf;
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:700;
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    .grid{
+      display:grid;
+      gap:16px;
+    }
+
+    .grid-4{ grid-template-columns:repeat(4,1fr); }
+    .grid-2{ grid-template-columns:repeat(2,1fr); }
+
+    @media (max-width:1180px){
+      .grid-4{ grid-template-columns:repeat(2,1fr); }
+      .grid-2{ grid-template-columns:1fr; }
+    }
+
+    @media (max-width:700px){
+      .grid-4{ grid-template-columns:1fr; }
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+
+    .card h3{
+      margin:0 0 14px 0;
+      font-size:18px;
+      color:var(--dhl-black);
+    }
+
+    .section-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+    }
+
+    .section-title h3{
+      margin:0;
+    }
+
+    .section-chip{
+      background:#fff8db;
+      color:#7a5a00;
+      border:1px solid #f5d66f;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .kpi{
+      min-height:118px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:8px;
+      position:relative;
+      overflow:hidden;
+      background:linear-gradient(180deg,#fff,#fffef7);
+    }
+
+    .kpi::after{
+      content:"";
+      position:absolute;
+      right:-18px;
+      top:-18px;
+      width:86px;
+      height:86px;
+      border-radius:50%;
+      background:rgba(255,204,0,.22);
+    }
+
+    .kpi .label{
+      position:relative;
+      z-index:1;
+      color:var(--muted);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.6px;
+      font-weight:700;
+    }
+
+    .kpi .value{
+      position:relative;
+      z-index:1;
+      font-size:32px;
+      font-weight:800;
+      color:var(--dhl-red);
+    }
+
+    .row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:end;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      flex:1;
+      min-width:220px;
+    }
+
+    .field label{
+      font-size:13px;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .field input[type="file"],
+    .field input[type="text"]{
+      width:100%;
+      border:1px solid #d6dae1;
+      background:#fff;
+      border-radius:14px;
+      padding:13px 14px;
+      font-size:14px;
+      outline:none;
+      transition:.18s ease;
+    }
+
+    .field input[type="file"]:focus,
+    .field input[type="text"]:focus{
+      border-color:#f2b700;
+      box-shadow:0 0 0 4px rgba(255,204,0,.22);
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      border:none;
+      border-radius:14px;
+      padding:12px 16px;
+      cursor:pointer;
+      font-weight:800;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      transition:.18s ease;
+      box-shadow:0 6px 14px rgba(0,0,0,.08);
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+    }
+
+    .btn-primary{
+      background:linear-gradient(180deg,var(--dhl-yellow),#f1be00);
+      color:#2b2b2b;
+    }
+
+    .btn-red{
+      background:linear-gradient(180deg,var(--dhl-red),var(--dhl-red-dark));
+      color:#fff;
+    }
+
+    .btn-dark{
+      background:linear-gradient(180deg,#3e434a,#262a2f);
+      color:#fff;
+    }
+
+    .btn-soft{
+      background:#fff6cf;
+      color:#6d5400;
+      border:1px solid #f0d66a;
+    }
+
+    .small{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+
+    .mono{
+      font-family:Consolas, monospace;
+    }
+
+    .flash-wrap{
+      display:grid;
+      gap:10px;
+      margin-bottom:16px;
+    }
+
+    .flash{
+      padding:12px 14px;
+      border-radius:14px;
+      font-size:14px;
+      border:1px solid transparent;
+      background:#fff;
+      box-shadow:var(--shadow);
+      font-weight:700;
+    }
+
+    .flash.success{ border-color:#b7ebc6; background:#ecfdf3; color:#166534; }
+    .flash.warning{ border-color:#fde68a; background:#fffbeb; color:#92400e; }
+    .flash.danger{ border-color:#fecaca; background:#fef2f2; color:#991b1b; }
+
+    .table-wrap{
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:#fff;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1300px;
+      background:#fff;
+    }
+
+    th, td{
+      padding:10px 12px;
+      border-bottom:1px solid #edf0f4;
+      text-align:left;
+      vertical-align:top;
+      font-size:13px;
+    }
+
+    thead th{
+      background:linear-gradient(180deg,#fff8db,#ffefab);
+      color:#4b3c00;
+      position:sticky;
+      top:0;
+      z-index:2;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    tbody tr:hover{
+      background:#fffdf5;
+    }
+
+    .badge{
+      display:inline-block;
+      padding:7px 11px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+      border:1px solid transparent;
+    }
+
+    .ok{
+      background:var(--ok-bg);
+      color:var(--ok-text);
+      border-color:#b7e1c6;
+    }
+
+    .warnb{
+      background:var(--warn-bg);
+      color:var(--warn-text);
+      border-color:#f4d58d;
+    }
+
+    .dangerb{
+      background:var(--danger-bg);
+      color:var(--danger-text);
+      border-color:#f3c2c8;
+    }
+
+    .mutedb{
+      background:var(--neutral-bg);
+      color:var(--neutral-text);
+      border-color:#d8dde6;
+    }
+
+    .time-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:64px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      text-align:center;
+    }
+
+    .time-good{
+      background:var(--time-good-bg);
+      color:var(--time-good-text);
+      border:1px solid #b7ebc6;
+    }
+
+    .time-mid{
+      background:var(--time-mid-bg);
+      color:var(--time-mid-text);
+      border:1px solid #f6d28b;
+    }
+
+    .time-high{
+      background:var(--time-high-bg);
+      color:var(--time-high-text);
+      border:1px solid #f2c2c8;
+    }
+
+    .time-empty{
+      background:#f3f4f6;
+      color:#6b7280;
+      border:1px solid #e5e7eb;
+    }
+
+    .info-grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+
+    @media (max-width:960px){
+      .info-grid{
+        grid-template-columns:1fr;
+      }
+    }
+
+    .subcard{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:linear-gradient(180deg,#fff,#fffdf5);
+      padding:14px;
+      box-shadow:0 6px 14px rgba(0,0,0,.04);
+    }
+
+    .subcard h4{
+      margin:0 0 10px 0;
+      font-size:15px;
+      color:var(--dhl-black);
+    }
+
+    .mini-table{
+      width:100%;
+      min-width:unset;
+    }
+
+    .mini-table th,
+    .mini-table td{
+      font-size:12px;
+      padding:8px;
+    }
+
+    .mini-table th{
+      width:54%;
+      color:#4b5563;
+      background:#fffdf5;
+    }
+
+    .process-cards{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+
+    @media (max-width:1200px){
+      .process-cards{
+        grid-template-columns:repeat(2,1fr);
+      }
+    }
+
+    @media (max-width:700px){
+      .process-cards{
+        grid-template-columns:1fr;
+      }
+    }
+
+    .process-card{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      background:linear-gradient(180deg,#fff,#fffef8);
+      box-shadow:0 6px 14px rgba(0,0,0,.04);
+    }
+
+    .process-card .p-label{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+      margin-bottom:8px;
+    }
+
+    .process-card .p-time{
+      font-size:15px;
+      font-weight:800;
+      color:var(--dhl-red);
+      line-height:1.3;
+    }
+
+    details{
+      background:#fcfcfd;
+      border:1px solid #e7ebf0;
+      border-radius:14px;
+      padding:10px 12px;
+    }
+
+    details summary{
+      cursor:pointer;
+      font-weight:800;
+      color:#232b36;
+    }
+
+    .json-grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+
+    @media (max-width:1000px){
+      .json-grid{
+        grid-template-columns:1fr;
+      }
+    }
+
+    .kv{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      padding:12px;
+      max-height:440px;
+      overflow:auto;
+    }
+
+    .kv table{
+      min-width:unset;
+    }
+
+    .kv th, .kv td{
+      font-size:12px;
+      padding:8px;
+    }
+
+    .kv strong{
+      color:var(--dhl-red);
+    }
+
+    .result-panel{
+      border:1px solid #f3d56c;
+      background:linear-gradient(180deg,#fffdf5,#fff8db);
+    }
+
+    .scan-helper{
+      margin-top:10px;
+      font-size:12px;
+      color:#7c5b00;
+      font-weight:700;
+    }
+
+    .footer-note{
+      margin-top:12px;
+      font-size:12px;
+      color:#6b7280;
+    }
+
+    .sla-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+
+    @media (max-width:1000px){
+      .sla-grid{
+        grid-template-columns:1fr;
+      }
+    }
+
+    .sla-card{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      background:linear-gradient(180deg,#fff,#fffef8);
+      box-shadow:0 6px 14px rgba(0,0,0,.04);
+    }
+
+    .sla-title{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.5px;
+      color:var(--muted);
+      font-weight:700;
+      margin-bottom:8px;
+    }
+
+    .sla-value{
+      font-size:16px;
+      font-weight:800;
+      color:var(--dhl-black);
+      line-height:1.35;
+    }
+
+    .sla-highlight-ok{
+      color:var(--ok-text);
+    }
+
+    .sla-highlight-danger{
+      color:var(--danger-text);
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar"></div>
+
+  <div class="wrap">
+
+    <div class="hero">
+      <div class="hero-content">
+        <div>
+          <h1>Comparativo de códigos</h1>
+          <p>Controle visual no padrão DHL para importação do Arquivo A e Arquivo B, bipagem rápida, análise temporal por etapas, SLA de 24 horas e histórico operacional completo.</p>
+        </div>
+        <div class="hero-badge">DHL Security Dashboard</div>
+      </div>
+    </div>
+
+    {% macro time_class(v) -%}
+      {%- if v is none or v == '-' or v == '' -%}time-empty
+      {%- elif v|float <= 60 -%}time-good
+      {%- elif v|float <= 180 -%}time-mid
+      {%- else -%}time-high
+      {%- endif -%}
+    {%- endmacro %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-wrap">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="grid grid-4">
+      <div class="card kpi">
+        <div class="label">Arquivos importados</div>
+        <div class="value">{{ resumo.arquivos or 0 }}</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Linhas carregadas</div>
+        <div class="value">{{ resumo.linhas or 0 }}</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Códigos pesquisados</div>
+        <div class="value">{{ resumo.codigos_pesquisados or 0 }}</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Encontrados</div>
+        <div class="value">{{ resumo.encontrados or 0 }}</div>
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="section-title">
+          <h3>Upload das bases</h3>
+          <span class="section-chip">Entrada de arquivos</span>
+        </div>
+
+        <form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+          <div class="row">
+            <div class="field">
+              <label>Arquivo A</label>
+              <input type="file" name="arquivo_a" accept=".xlsx,.xls" required>
+            </div>
+
+            <div class="field">
+              <label>Arquivo B</label>
+              <input type="file" name="arquivo_b" accept=".xlsx,.xls" required>
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary">Importar bases</button>
+          </div>
+        </form>
+
+        <div style="height:14px"></div>
+
+        <div class="small">
+          O sistema compara automaticamente pelos campos configurados no back-end. Para os códigos do tipo <strong>B000...</strong>, a comparação pode usar colunas como <strong>Shelf Container Number</strong>, <strong>Transit Shelf Tote Number</strong>, <strong>Shipping container</strong> e <strong>Shipment Container Number</strong>.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h3>Bipagem rápida</h3>
+          <span class="section-chip">Leitura automática</span>
+        </div>
+
+        <form method="post" action="{{ url_for('scan') }}" id="scanForm">
+          <div class="row">
+            <div class="field">
+              <label>Código</label>
+              <input
+                type="text"
+                name="scanned_code"
+                id="scanned_code"
+                class="mono"
+                placeholder="Leia ou digite o código"
+                autofocus
+                autocomplete="off"
+                required
+              >
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-red">Processar comparativo</button>
+            <a class="btn btn-dark" href="{{ url_for('export_scans_excel') }}">Exportar histórico</a>
+            <a class="btn btn-soft" href="{{ url_for('export_comparison_excel') }}">Exportar comparativo</a>
+          </div>
+        </form>
+
+        <div class="scan-helper">
+          O envio é automático ao pressionar Enter ou após a leitura do scanner.
+        </div>
+
+        {% if latest_result %}
+          <div style="height:16px"></div>
+
+          <div class="card result-panel" style="padding:14px;">
+            <div class="section-title">
+              <strong>Último resultado</strong>
+              <span class="badge
+                {% if latest_result.status == 'ENCONTRADO NAS DUAS' %}ok
+                {% elif latest_result.status == 'NAO ENCONTRADO' %}dangerb
+                {% elif latest_result.status in ['SOMENTE NO ARQUIVO A', 'SOMENTE NO ARQUIVO B'] %}warnb
+                {% else %}mutedb{% endif %}">
+                {{ latest_result.status }}
+              </span>
+            </div>
+
+            <div><strong>Código:</strong> <span class="mono">{{ latest_result.scanned_code }}</span></div>
+            <div><strong>Primeira entrada A:</strong> {{ latest_result.first_entry }}</div>
+            <div><strong>Primeiro registro B:</strong> {{ latest_result.first_processed }}</div>
+            <div><strong>Último registro B:</strong> {{ latest_result.last_processed }}</div>
+            <div><strong>Quantidade em B:</strong> {{ latest_result.processed_count }}</div>
+            <div>
+              <strong>Delta primeiro (min):</strong>
+              <span class="time-badge {{ time_class(latest_result.delta_first_minutes) }}">
+                {{ latest_result.delta_first_minutes if latest_result.delta_first_minutes is not none else '-' }}
+              </span>
+            </div>
+            <div>
+              <strong>Delta último (min):</strong>
+              <span class="time-badge {{ time_class(latest_result.delta_last_minutes) }}">
+                {{ latest_result.delta_last_minutes if latest_result.delta_last_minutes is not none else '-' }}
+              </span>
+            </div>
+          </div>
+
+          {% if latest_result.process_times_a %}
+            <div class="process-cards">
+              <div class="process-card">
+                <div class="p-label">Creation Time</div>
+                <div class="p-time">{{ latest_result.process_times_a.get('Creation Time', '-') }}</div>
+              </div>
+              <div class="process-card">
+                <div class="p-label">Closing Time</div>
+                <div class="p-time">{{ latest_result.process_times_a.get('Closing Time', '-') }}</div>
+              </div>
+              <div class="process-card">
+                <div class="p-label">Shipment Time</div>
+                <div class="p-time">{{ latest_result.process_times_a.get('Shipment Time', '-') }}</div>
+              </div>
+              <div class="process-card">
+                <div class="p-label">Signed for</div>
+                <div class="p-time">{{ latest_result.process_times_a.get('Signed for', '-') }}</div>
+              </div>
+            </div>
+
+            <div class="sla-grid">
+              <div class="sla-card">
+                <div class="sla-title">Tempo total do processo</div>
+                <div class="sla-value">{{ latest_result.sla_info.get('tempo_total_formatado', '-') }}</div>
+              </div>
+
+              <div class="sla-card">
+                <div class="sla-title">Status SLA 24h</div>
+                <div class="sla-value {% if latest_result.sla_info.get('estourou_sla') %}sla-highlight-danger{% else %}sla-highlight-ok{% endif %}">
+                  {% if latest_result.sla_info.get('estourou_sla') is none %}
+                    -
+                  {% elif latest_result.sla_info.get('estourou_sla') %}
+                    Estourado
+                  {% else %}
+                    Dentro do prazo
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="sla-card">
+                <div class="sla-title">Etapa mais demorada</div>
+                <div class="sla-value">{{ latest_result.sla_info.get('etapa_mais_demorada', '-') }}</div>
+              </div>
+            </div>
+
+            <div style="height:12px"></div>
+
+            <div class="info-grid">
+              <div class="subcard">
+                <h4>Tempos do Arquivo A</h4>
+                <table class="mini-table">
+                  <tbody>
+                    <tr>
+                      <th>Creation Time</th>
+                      <td>{{ latest_result.process_times_a.get('Creation Time', '-') }}</td>
+                    </tr>
+                    <tr>
+                      <th>Closing Time</th>
+                      <td>{{ latest_result.process_times_a.get('Closing Time', '-') }}</td>
+                    </tr>
+                    <tr>
+                      <th>Shipment Time</th>
+                      <td>{{ latest_result.process_times_a.get('Shipment Time', '-') }}</td>
+                    </tr>
+                    <tr>
+                      <th>Signed for</th>
+                      <td>{{ latest_result.process_times_a.get('Signed for', '-') }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="subcard">
+                <h4>SLA e análise do processo</h4>
+                <table class="mini-table">
+                  <tbody>
+                    <tr>
+                      <th>SLA (horas)</th>
+                      <td>{{ latest_result.sla_info.get('sla_hours', '-') }}</td>
+                    </tr>
+                    <tr>
+                      <th>Tempo total do processo</th>
+                      <td>{{ latest_result.sla_info.get('tempo_total_formatado', '-') }}</td>
+                    </tr>
+                    <tr>
+                      <th>Tempo restante SLA</th>
+                      <td>{{ latest_result.sla_info.get('tempo_restante_formatado', '-') }}</td>
+                    </tr>
+                    <tr>
+                      <th>Tempo excedido SLA</th>
+                      <td>{{ latest_result.sla_info.get('tempo_excedido_formatado', '-') }}</td>
+                    </tr>
+                    <tr>
+                      <th>Etapa mais demorada</th>
+                      <td>{{ latest_result.sla_info.get('etapa_mais_demorada', '-') }}</td>
+                    </tr>
+                    <tr>
+                      <th>Tempo etapa mais demorada</th>
+                      <td>{{ latest_result.sla_info.get('tempo_etapa_mais_demorada_formatado', '-') }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div style="height:12px"></div>
+
+            <div class="subcard">
+              <h4>Cálculo entre processos</h4>
+              <table class="mini-table">
+                <tbody>
+                  <tr>
+                    <th>Creation Time -> Closing Time</th>
+                    <td>
+                      <span class="time-badge {{ time_class(latest_result.process_deltas_a.get('Creation Time -> Closing Time (min)')) }}">
+                        {{ latest_result.process_deltas_a_human.get('Creation Time -> Closing Time', '-') }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Closing Time -> Shipment Time</th>
+                    <td>
+                      <span class="time-badge {{ time_class(latest_result.process_deltas_a.get('Closing Time -> Shipment Time (min)')) }}">
+                        {{ latest_result.process_deltas_a_human.get('Closing Time -> Shipment Time', '-') }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Shipment Time -> Signed for</th>
+                    <td>
+                      <span class="time-badge {{ time_class(latest_result.process_deltas_a.get('Shipment Time -> Signed for (min)')) }}">
+                        {{ latest_result.process_deltas_a_human.get('Shipment Time -> Signed for', '-') }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Creation Time -> Signed for</th>
+                    <td>
+                      <span class="time-badge {{ time_class(latest_result.process_deltas_a.get('Creation Time -> Signed for (min)')) }}">
+                        {{ latest_result.process_deltas_a_human.get('Creation Time -> Signed for', '-') }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+
+    <div class="card">
+      <div class="section-title">
+        <h3 style="margin:0;">Arquivos importados</h3>
+        <span class="section-chip">Rastreabilidade</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Label</th>
+              <th>Arquivo</th>
+              <th>Coluna Código</th>
+              <th>Coluna Data/Hora</th>
+              <th>Linhas</th>
+              <th>Enviado em</th>
+              <th>Download</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in uploaded_files %}
+              <tr>
+                <td>{{ f.id }}</td>
+                <td>{{ f.label }}</td>
+                <td>{{ f.filename }}</td>
+                <td>{{ f.code_column }}</td>
+                <td>{{ f.time_column }}</td>
+                <td>{{ f.rows_count }}</td>
+                <td>{{ f.uploaded_at }}</td>
+                <td>
+                  <a class="btn btn-dark" style="padding:8px 12px;" href="{{ url_for('download_file', file_id=f.id) }}">Baixar</a>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="8">Nenhum arquivo importado.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+
+    <div class="card">
+      <div class="section-title">
+        <h3 style="margin:0;">Histórico de comparações</h3>
+        <span class="section-chip">Monitoramento operacional</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Código</th>
+              <th>Bipado em</th>
+              <th>Status</th>
+              <th>Primeira entrada A</th>
+              <th>Primeiro registro B</th>
+              <th>Último registro B</th>
+              <th>Qtd. B</th>
+              <th>Delta 1º</th>
+              <th>Delta último</th>
+              <th>Creation Time -> Closing Time</th>
+              <th>Closing Time -> Shipment Time</th>
+              <th>Shipment Time -> Signed for</th>
+              <th>Creation Time -> Signed for</th>
+              <th>SLA 24h</th>
+              <th>Etapa mais demorada</th>
+              <th>Detalhes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in resultados %}
+              <tr>
+                <td>{{ r.id }}</td>
+                <td class="mono">{{ r.scanned_code }}</td>
+                <td>{{ r.scanned_at }}</td>
+                <td>
+                  <span class="badge
+                    {% if r.status == 'ENCONTRADO NAS DUAS' %}ok
+                    {% elif r.status == 'NAO ENCONTRADO' %}dangerb
+                    {% elif r.status in ['SOMENTE NO ARQUIVO A', 'SOMENTE NO ARQUIVO B'] %}warnb
+                    {% else %}mutedb{% endif %}">
+                    {{ r.status }}
+                  </span>
+                </td>
+                <td>{{ r.first_entry }}</td>
+                <td>{{ r.first_processed }}</td>
+                <td>{{ r.last_processed }}</td>
+                <td>{{ r.qtd_processados }}</td>
+                <td>
+                  <span class="time-badge {{ time_class(r.delta_first_minutes) }}">
+                    {{ r.delta_first_minutes if r.delta_first_minutes is not none else '-' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="time-badge {{ time_class(r.delta_last_minutes) }}">
+                    {{ r.delta_last_minutes if r.delta_last_minutes is not none else '-' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="time-badge {{ time_class(r.process_deltas_a.get('Creation Time -> Closing Time (min)')) }}">
+                    {{ r.process_deltas_a_human.get('Creation Time -> Closing Time', '-') }}
+                  </span>
+                </td>
+                <td>
+                  <span class="time-badge {{ time_class(r.process_deltas_a.get('Closing Time -> Shipment Time (min)')) }}">
+                    {{ r.process_deltas_a_human.get('Closing Time -> Shipment Time', '-') }}
+                  </span>
+                </td>
+                <td>
+                  <span class="time-badge {{ time_class(r.process_deltas_a.get('Shipment Time -> Signed for (min)')) }}">
+                    {{ r.process_deltas_a_human.get('Shipment Time -> Signed for', '-') }}
+                  </span>
+                </td>
+                <td>
+                  <span class="time-badge {{ time_class(r.process_deltas_a.get('Creation Time -> Signed for (min)')) }}">
+                    {{ r.process_deltas_a_human.get('Creation Time -> Signed for', '-') }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge {% if r.sla_info.get('estourou_sla') %}dangerb{% else %}ok{% endif %}">
+                    {% if r.sla_info.get('estourou_sla') is none %}
+                      -
+                    {% elif r.sla_info.get('estourou_sla') %}
+                      Estourado
+                    {% else %}
+                      Dentro
+                    {% endif %}
+                  </span>
+                </td>
+                <td>{{ r.sla_info.get('etapa_mais_demorada', '-') }}</td>
+                <td style="min-width:760px;">
+                  <details>
+                    <summary>Ver dados das linhas</summary>
+
+                    <div style="margin:12px 0;">
+                      <div class="kv">
+                        <strong>Tempos calculados do Arquivo A</strong>
+                        <table>
+                          <tbody>
+                            <tr>
+                              <th>Creation Time</th>
+                              <td>{{ r.process_times_a.get('Creation Time', '-') }}</td>
+                            </tr>
+                            <tr>
+                              <th>Closing Time</th>
+                              <td>{{ r.process_times_a.get('Closing Time', '-') }}</td>
+                            </tr>
+                            <tr>
+                              <th>Shipment Time</th>
+                              <td>{{ r.process_times_a.get('Shipment Time', '-') }}</td>
+                            </tr>
+                            <tr>
+                              <th>Signed for</th>
+                              <td>{{ r.process_times_a.get('Signed for', '-') }}</td>
+                            </tr>
+                            <tr>
+                              <th>Creation Time -> Closing Time</th>
+                              <td>
+                                <span class="time-badge {{ time_class(r.process_deltas_a.get('Creation Time -> Closing Time (min)')) }}">
+                                  {{ r.process_deltas_a_human.get('Creation Time -> Closing Time', '-') }}
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <th>Closing Time -> Shipment Time</th>
+                              <td>
+                                <span class="time-badge {{ time_class(r.process_deltas_a.get('Closing Time -> Shipment Time (min)')) }}">
+                                  {{ r.process_deltas_a_human.get('Closing Time -> Shipment Time', '-') }}
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <th>Shipment Time -> Signed for</th>
+                              <td>
+                                <span class="time-badge {{ time_class(r.process_deltas_a.get('Shipment Time -> Signed for (min)')) }}">
+                                  {{ r.process_deltas_a_human.get('Shipment Time -> Signed for', '-') }}
+                                </span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <th>Creation Time -> Signed for</th>
+                              <td>
+                                <span class="time-badge {{ time_class(r.process_deltas_a.get('Creation Time -> Signed for (min)')) }}">
+                                  {{ r.process_deltas_a_human.get('Creation Time -> Signed for', '-') }}
+                                </span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div style="margin:12px 0;">
+                      <div class="kv">
+                        <strong>SLA e análise operacional</strong>
+                        <table>
+                          <tbody>
+                            <tr>
+                              <th>SLA (horas)</th>
+                              <td>{{ r.sla_info.get('sla_hours', '-') }}</td>
+                            </tr>
+                            <tr>
+                              <th>Tempo total do processo</th>
+                              <td>{{ r.sla_info.get('tempo_total_formatado', '-') }}</td>
+                            </tr>
+                            <tr>
+                              <th>Estourou SLA</th>
+                              <td>
+                                {% if r.sla_info.get('estourou_sla') is none %}
+                                  -
+                                {% elif r.sla_info.get('estourou_sla') %}
+                                  Sim
+                                {% else %}
+                                  Não
+                                {% endif %}
+                              </td>
+                            </tr>
+                            <tr>
+                              <th>Tempo restante SLA</th>
+                              <td>{{ r.sla_info.get('tempo_restante_formatado', '-') }}</td>
+                            </tr>
+                            <tr>
+                              <th>Tempo excedido SLA</th>
+                              <td>{{ r.sla_info.get('tempo_excedido_formatado', '-') }}</td>
+                            </tr>
+                            <tr>
+                              <th>Etapa mais demorada</th>
+                              <td>{{ r.sla_info.get('etapa_mais_demorada', '-') }}</td>
+                            </tr>
+                            <tr>
+                              <th>Tempo etapa mais demorada</th>
+                              <td>{{ r.sla_info.get('tempo_etapa_mais_demorada_formatado', '-') }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div class="json-grid">
+                      <div class="kv">
+                        <strong>Arquivo A</strong>
+                        {% if r.details.base_a_rows %}
+                          {% for row in r.details.base_a_rows %}
+                            <div style="margin-top:10px;">
+                              <table>
+                                <tbody>
+                                  {% for k, v in row.items() %}
+                                    <tr>
+                                      <th style="width:45%;">{{ k }}</th>
+                                      <td>{{ v }}</td>
+                                    </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                          {% endfor %}
+                        {% else %}
+                          <div style="margin-top:10px;">Sem registros no Arquivo A.</div>
+                        {% endif %}
+                      </div>
+
+                      <div class="kv">
+                        <strong>Arquivo B</strong>
+                        {% if r.details.base_b_rows %}
+                          {% for row in r.details.base_b_rows %}
+                            <div style="margin-top:10px;">
+                              <table>
+                                <tbody>
+                                  {% for k, v in row.items() %}
+                                    <tr>
+                                      <th style="width:45%;">{{ k }}</th>
+                                      <td>{{ v }}</td>
+                                    </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                          {% endfor %}
+                        {% else %}
+                          <div style="margin-top:10px;">Sem registros no Arquivo B.</div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </details>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="17">Nenhum comparativo executado ainda.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer-note">
+        Faixa de cores dos tempos: até 60 min = verde, até 180 min = amarelo, acima de 180 min = vermelho. SLA padrão: 24 horas.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('load', function () {
+      const input = document.getElementById('scanned_code');
+      const form = document.getElementById('scanForm');
+
+      if (input) {
+        input.focus();
+        input.select();
+      }
+
+      if (input && form) {
+        let scanTimer = null;
+
+        input.addEventListener('keydown', function(e){
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (input.value.trim()) {
+              form.submit();
+            }
+          }
+        });
+
+        input.addEventListener('input', function(){
+          clearTimeout(scanTimer);
+          scanTimer = setTimeout(function(){
+            const val = input.value.trim();
+            if (val.length >= 8) {
+              form.submit();
+            }
+          }, 220);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
