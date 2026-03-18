@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8">
-  <title>Comparativo Arquivo A x Arquivo B</title>
+  <title>Comparativo Arquivo A x Arquivo B x Arquivo C</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
@@ -713,6 +713,11 @@
               <label>Arquivo B</label>
               <input type="file" name="arquivo_b" accept=".xlsx,.xls" required>
             </div>
+
+            <div class="field">
+              <label>Arquivo C</label>
+              <input type="file" name="arquivo_c" accept=".xlsx,.xls">
+            </div>
           </div>
 
           <div style="height:12px"></div>
@@ -725,7 +730,7 @@
         <div style="height:14px"></div>
 
         <div class="small">
-          O sistema compara automaticamente pelos campos configurados no back-end. Para os códigos do tipo <strong>B000...</strong>, a comparação pode usar colunas como <strong>Shelf Container Number</strong>, <strong>Transit Shelf Tote Number</strong>, <strong>Shipping container</strong> e <strong>Shipment Container Number</strong>.
+          O sistema compara automaticamente pelos campos configurados no back-end. Agora também é possível importar um terceiro arquivo para apoiar a análise.
         </div>
       </div>
 
@@ -738,16 +743,28 @@
         <form method="post" action="{{ url_for('scan') }}" id="scanForm">
           <div class="row">
             <div class="field">
-              <label>Código</label>
+              <label>Código principal</label>
               <input
                 type="text"
                 name="scanned_code"
                 id="scanned_code"
                 class="mono"
-                placeholder="Leia ou digite o código"
+                placeholder="Leia ou digite o código principal"
                 autofocus
                 autocomplete="off"
                 required
+              >
+            </div>
+
+            <div class="field">
+              <label>Código do pacote (ex.: GC)</label>
+              <input
+                type="text"
+                name="package_code"
+                id="package_code"
+                class="mono"
+                placeholder="Digite o código do pacote"
+                autocomplete="off"
               >
             </div>
           </div>
@@ -780,7 +797,10 @@
               </span>
             </div>
 
-            <div><strong>Código:</strong> <span class="mono">{{ latest_result.scanned_code }}</span></div>
+            <div><strong>Código principal:</strong> <span class="mono">{{ latest_result.scanned_code }}</span></div>
+            {% if latest_result.package_code %}
+              <div><strong>Código do pacote:</strong> <span class="mono">{{ latest_result.package_code }}</span></div>
+            {% endif %}
             <div><strong>Primeira entrada A:</strong> {{ latest_result.first_entry }}</div>
             <div><strong>Primeiro registro B:</strong> {{ latest_result.first_processed }}</div>
             <div><strong>Último registro B:</strong> {{ latest_result.last_processed }}</div>
@@ -842,108 +862,6 @@
                 <div class="sla-title">Etapa mais demorada</div>
                 <div class="sla-value">{{ latest_result.sla_info.get('etapa_mais_demorada', '-') }}</div>
               </div>
-            </div>
-
-            <div style="height:12px"></div>
-
-            <div class="info-grid">
-              <div class="subcard">
-                <h4>Tempos do Arquivo A</h4>
-                <table class="mini-table">
-                  <tbody>
-                    <tr>
-                      <th>Creation Time</th>
-                      <td>{{ latest_result.process_times_a.get('Creation Time', '-') }}</td>
-                    </tr>
-                    <tr>
-                      <th>Closing Time</th>
-                      <td>{{ latest_result.process_times_a.get('Closing Time', '-') }}</td>
-                    </tr>
-                    <tr>
-                      <th>Shipment Time</th>
-                      <td>{{ latest_result.process_times_a.get('Shipment Time', '-') }}</td>
-                    </tr>
-                    <tr>
-                      <th>Signed for</th>
-                      <td>{{ latest_result.process_times_a.get('Signed for', '-') }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="subcard">
-                <h4>SLA e análise do processo</h4>
-                <table class="mini-table">
-                  <tbody>
-                    <tr>
-                      <th>SLA (horas)</th>
-                      <td>{{ latest_result.sla_info.get('sla_hours', '-') }}</td>
-                    </tr>
-                    <tr>
-                      <th>Tempo total do processo</th>
-                      <td>{{ latest_result.sla_info.get('tempo_total_formatado', '-') }}</td>
-                    </tr>
-                    <tr>
-                      <th>Tempo restante SLA</th>
-                      <td>{{ latest_result.sla_info.get('tempo_restante_formatado', '-') }}</td>
-                    </tr>
-                    <tr>
-                      <th>Tempo excedido SLA</th>
-                      <td>{{ latest_result.sla_info.get('tempo_excedido_formatado', '-') }}</td>
-                    </tr>
-                    <tr>
-                      <th>Etapa mais demorada</th>
-                      <td>{{ latest_result.sla_info.get('etapa_mais_demorada', '-') }}</td>
-                    </tr>
-                    <tr>
-                      <th>Tempo etapa mais demorada</th>
-                      <td>{{ latest_result.sla_info.get('tempo_etapa_mais_demorada_formatado', '-') }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div style="height:12px"></div>
-
-            <div class="subcard">
-              <h4>Cálculo entre processos</h4>
-              <table class="mini-table">
-                <tbody>
-                  <tr>
-                    <th>Creation Time -> Closing Time</th>
-                    <td>
-                      <span class="time-badge {{ time_class(latest_result.process_deltas_a.get('Creation Time -> Closing Time (min)')) }}">
-                        {{ latest_result.process_deltas_a_human.get('Creation Time -> Closing Time', '-') }}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Closing Time -> Shipment Time</th>
-                    <td>
-                      <span class="time-badge {{ time_class(latest_result.process_deltas_a.get('Closing Time -> Shipment Time (min)')) }}">
-                        {{ latest_result.process_deltas_a_human.get('Closing Time -> Shipment Time', '-') }}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Shipment Time -> Signed for</th>
-                    <td>
-                      <span class="time-badge {{ time_class(latest_result.process_deltas_a.get('Shipment Time -> Signed for (min)')) }}">
-                        {{ latest_result.process_deltas_a_human.get('Shipment Time -> Signed for', '-') }}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Creation Time -> Signed for</th>
-                    <td>
-                      <span class="time-badge {{ time_class(latest_result.process_deltas_a.get('Creation Time -> Signed for (min)')) }}">
-                        {{ latest_result.process_deltas_a_human.get('Creation Time -> Signed for', '-') }}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           {% endif %}
         {% endif %}
@@ -1009,7 +927,8 @@
           <thead>
             <tr>
               <th>ID</th>
-              <th>Código</th>
+              <th>Código principal</th>
+              <th>Código pacote</th>
               <th>Bipado em</th>
               <th>Status</th>
               <th>Primeira entrada A</th>
@@ -1018,10 +937,6 @@
               <th>Qtd. B</th>
               <th>Delta 1º</th>
               <th>Delta último</th>
-              <th>Creation Time -> Closing Time</th>
-              <th>Closing Time -> Shipment Time</th>
-              <th>Shipment Time -> Signed for</th>
-              <th>Creation Time -> Signed for</th>
               <th>SLA 24h</th>
               <th>Etapa mais demorada</th>
               <th>Detalhes</th>
@@ -1032,6 +947,7 @@
               <tr>
                 <td>{{ r.id }}</td>
                 <td class="mono">{{ r.scanned_code }}</td>
+                <td class="mono">{{ r.package_code or '-' }}</td>
                 <td>{{ r.scanned_at }}</td>
                 <td>
                   <span class="badge
@@ -1057,26 +973,6 @@
                   </span>
                 </td>
                 <td>
-                  <span class="time-badge {{ time_class(r.process_deltas_a.get('Creation Time -> Closing Time (min)')) }}">
-                    {{ r.process_deltas_a_human.get('Creation Time -> Closing Time', '-') }}
-                  </span>
-                </td>
-                <td>
-                  <span class="time-badge {{ time_class(r.process_deltas_a.get('Closing Time -> Shipment Time (min)')) }}">
-                    {{ r.process_deltas_a_human.get('Closing Time -> Shipment Time', '-') }}
-                  </span>
-                </td>
-                <td>
-                  <span class="time-badge {{ time_class(r.process_deltas_a.get('Shipment Time -> Signed for (min)')) }}">
-                    {{ r.process_deltas_a_human.get('Shipment Time -> Signed for', '-') }}
-                  </span>
-                </td>
-                <td>
-                  <span class="time-badge {{ time_class(r.process_deltas_a.get('Creation Time -> Signed for (min)')) }}">
-                    {{ r.process_deltas_a_human.get('Creation Time -> Signed for', '-') }}
-                  </span>
-                </td>
-                <td>
                   <span class="badge {% if r.sla_info.get('estourou_sla') %}dangerb{% else %}ok{% endif %}">
                     {% if r.sla_info.get('estourou_sla') is none %}
                       -
@@ -1094,102 +990,24 @@
 
                     <div style="margin:12px 0;">
                       <div class="kv">
-                        <strong>Tempos calculados do Arquivo A</strong>
+                        <strong>Resumo</strong>
                         <table>
                           <tbody>
                             <tr>
-                              <th>Creation Time</th>
-                              <td>{{ r.process_times_a.get('Creation Time', '-') }}</td>
+                              <th>Código principal</th>
+                              <td>{{ r.scanned_code }}</td>
                             </tr>
                             <tr>
-                              <th>Closing Time</th>
-                              <td>{{ r.process_times_a.get('Closing Time', '-') }}</td>
+                              <th>Código pacote</th>
+                              <td>{{ r.package_code or '-' }}</td>
                             </tr>
                             <tr>
-                              <th>Shipment Time</th>
-                              <td>{{ r.process_times_a.get('Shipment Time', '-') }}</td>
+                              <th>Status</th>
+                              <td>{{ r.status }}</td>
                             </tr>
                             <tr>
-                              <th>Signed for</th>
-                              <td>{{ r.process_times_a.get('Signed for', '-') }}</td>
-                            </tr>
-                            <tr>
-                              <th>Creation Time -> Closing Time</th>
-                              <td>
-                                <span class="time-badge {{ time_class(r.process_deltas_a.get('Creation Time -> Closing Time (min)')) }}">
-                                  {{ r.process_deltas_a_human.get('Creation Time -> Closing Time', '-') }}
-                                </span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <th>Closing Time -> Shipment Time</th>
-                              <td>
-                                <span class="time-badge {{ time_class(r.process_deltas_a.get('Closing Time -> Shipment Time (min)')) }}">
-                                  {{ r.process_deltas_a_human.get('Closing Time -> Shipment Time', '-') }}
-                                </span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <th>Shipment Time -> Signed for</th>
-                              <td>
-                                <span class="time-badge {{ time_class(r.process_deltas_a.get('Shipment Time -> Signed for (min)')) }}">
-                                  {{ r.process_deltas_a_human.get('Shipment Time -> Signed for', '-') }}
-                                </span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <th>Creation Time -> Signed for</th>
-                              <td>
-                                <span class="time-badge {{ time_class(r.process_deltas_a.get('Creation Time -> Signed for (min)')) }}">
-                                  {{ r.process_deltas_a_human.get('Creation Time -> Signed for', '-') }}
-                                </span>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    <div style="margin:12px 0;">
-                      <div class="kv">
-                        <strong>SLA e análise operacional</strong>
-                        <table>
-                          <tbody>
-                            <tr>
-                              <th>SLA (horas)</th>
-                              <td>{{ r.sla_info.get('sla_hours', '-') }}</td>
-                            </tr>
-                            <tr>
-                              <th>Tempo total do processo</th>
+                              <th>SLA</th>
                               <td>{{ r.sla_info.get('tempo_total_formatado', '-') }}</td>
-                            </tr>
-                            <tr>
-                              <th>Estourou SLA</th>
-                              <td>
-                                {% if r.sla_info.get('estourou_sla') is none %}
-                                  -
-                                {% elif r.sla_info.get('estourou_sla') %}
-                                  Sim
-                                {% else %}
-                                  Não
-                                {% endif %}
-                              </td>
-                            </tr>
-                            <tr>
-                              <th>Tempo restante SLA</th>
-                              <td>{{ r.sla_info.get('tempo_restante_formatado', '-') }}</td>
-                            </tr>
-                            <tr>
-                              <th>Tempo excedido SLA</th>
-                              <td>{{ r.sla_info.get('tempo_excedido_formatado', '-') }}</td>
-                            </tr>
-                            <tr>
-                              <th>Etapa mais demorada</th>
-                              <td>{{ r.sla_info.get('etapa_mais_demorada', '-') }}</td>
-                            </tr>
-                            <tr>
-                              <th>Tempo etapa mais demorada</th>
-                              <td>{{ r.sla_info.get('tempo_etapa_mais_demorada_formatado', '-') }}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -1241,12 +1059,34 @@
                         {% endif %}
                       </div>
                     </div>
+
+                    {% if r.details.base_c_rows %}
+                    <div class="json-grid" style="margin-top:12px;">
+                      <div class="kv" style="grid-column:1 / -1;">
+                        <strong>Arquivo C</strong>
+                        {% for row in r.details.base_c_rows %}
+                          <div style="margin-top:10px;">
+                            <table>
+                              <tbody>
+                                {% for k, v in row.items() %}
+                                  <tr>
+                                    <th style="width:45%;">{{ k }}</th>
+                                    <td>{{ v }}</td>
+                                  </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                    {% endif %}
                   </details>
                 </td>
               </tr>
             {% else %}
               <tr>
-                <td colspan="17">Nenhum comparativo executado ainda.</td>
+                <td colspan="14">Nenhum comparativo executado ainda.</td>
               </tr>
             {% endfor %}
           </tbody>

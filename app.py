@@ -10,6 +10,7 @@ import pandas as pd
 from flask import Flask, flash, g, redirect, render_template, request, send_file, url_for, session
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.exceptions import RequestEntityTooLarge
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / 'app.db'
@@ -20,7 +21,7 @@ ALLOWED_EXTENSIONS = {'.xlsx', '.xls'}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'troque-esta-chave-em-producao'
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
 
 # =========================================================
@@ -119,6 +120,57 @@ FILE_LAYOUTS = {
             'Boxing completion time',
             'Shipment Time',
         ],
+    },
+
+    'BASE_C': {
+        'required_columns': [
+            'Shipping Warehouse',
+            'Sub-Package Number',
+            'Order ID',
+            'Waybill Number',
+            'Combined package number',
+            'Consolidational Order Recommendation Number',
+            'Location',
+            'ZONE',
+            'roadway',
+            'Service Provider',
+            'Service Provider Product',
+            'Shipping Mode',
+            'FM Collection Batch Num',
+            'FM揽收服务商',
+            'Parcel business type',
+            'Package shape',
+            'Whether it is a sub-package of the sorting center',
+            'Sorting Center Warehouse',
+            'Shop ID',
+            'shop name',
+            'Payment Method',
+            'Whether it is a problem goods',
+            'Cancelled or not',
+            '是否待丢件确认',
+            'Is it shifting?',
+            'Cancel Time',
+            'Has it been returned?',
+            'refunder',
+            'withdrawal time',
+            'Type of exception',
+            'Package Status',
+            'Operation Time',
+            'Whether turn to seller direct',
+            'Number of reprints',
+        ],
+        'optional_columns': [],
+        'default_code_candidates': [
+            'Sub-Package Number',
+            'Waybill Number',
+            'Combined package number',
+            'Order ID',
+        ],
+        'default_time_candidates': [
+            'Operation Time',
+            'Cancel Time',
+            'withdrawal time',
+        ],
     }
 }
 
@@ -184,7 +236,9 @@ def init_db():
         CREATE TABLE IF NOT EXISTS scans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             scanned_code TEXT NOT NULL,
+            package_code TEXT,
             code_norm TEXT NOT NULL,
+            package_code_norm TEXT,
             scanned_at TEXT NOT NULL,
             status TEXT NOT NULL,
             first_entry_iso TEXT,
@@ -197,6 +251,14 @@ def init_db():
         );
         '''
     )
+    db.commit()
+
+    cols = [row[1] for row in db.execute("PRAGMA table_info(scans)").fetchall()]
+    if 'package_code' not in cols:
+        db.execute('ALTER TABLE scans ADD COLUMN package_code TEXT')
+    if 'package_code_norm' not in cols:
+        db.execute('ALTER TABLE scans ADD COLUMN package_code_norm TEXT')
+
     db.commit()
     db.close()
 
@@ -461,7 +523,6 @@ def parse_excel(file_like, label, code_column=None, time_column=None):
         raise ValueError(f'A planilha {label} está vazia.')
 
     layout = FILE_LAYOUTS.get(label, {})
-
     missing_columns = validate_expected_columns(df.columns, label)
     if missing_columns:
         raise ValueError(
@@ -600,17 +661,27 @@ def store_uploaded_excel(label, file_storage, code_column=None, time_column=None
 # =========================================================
 # COMPARAÇÃO
 # =========================================================
-def _collect_times(label, code_norm):
+def _collect_matches_for_any_label(label, possible_codes):
     db = get_db()
-    rows = db.execute(
-        '''
+
+    normalized_codes = []
+    for c in possible_codes:
+        norm = normalize_code(c)
+        if c and norm and norm not in normalized_codes:
+            normalized_codes.append(norm)
+
+    if not normalized_codes:
+        return [], []
+
+    placeholders = ','.join(['?'] * len(normalized_codes))
+    sql = f'''
         SELECT time_iso, time_raw, row_json
         FROM parsed_rows
-        WHERE label = ? AND code_norm = ?
+        WHERE label = ? AND code_norm IN ({placeholders})
         ORDER BY time_iso ASC
-        ''',
-        (label, code_norm)
-    ).fetchall()
+    '''
+
+    rows = db.execute(sql, [label] + normalized_codes).fetchall()
 
     times = []
     raw_rows = []
@@ -623,11 +694,26 @@ def _collect_times(label, code_norm):
     return times, raw_rows
 
 
-def compare_code(scanned_code: str):
-    code_norm = normalize_code(scanned_code)
+def compare_code(scanned_code: str, package_code: str = ''):
+    scanned_code = (scanned_code or '').strip()
+    package_code = (package_code or '').strip()
 
-    base_a_times, base_a_rows = _collect_times('BASE_A', code_norm)
-    base_b_times, base_b_rows = _collect_times('BASE_B', code_norm)
+    code_norm = normalize_code(scanned_code)
+    package_code_norm = normalize_code(package_code) if package_code else ''
+
+    possible_codes_ab = [scanned_code]
+    if package_code:
+        possible_codes_ab.append(package_code)
+
+    possible_codes_c = []
+    if package_code:
+        possible_codes_c.append(package_code)
+    if scanned_code:
+        possible_codes_c.append(scanned_code)
+
+    base_a_times, base_a_rows = _collect_matches_for_any_label('BASE_A', possible_codes_ab)
+    base_b_times, base_b_rows = _collect_matches_for_any_label('BASE_B', possible_codes_ab)
+    base_c_times, base_c_rows = _collect_matches_for_any_label('BASE_C', possible_codes_c)
 
     a_process = _extract_base_a_process_times(base_a_rows)
 
@@ -646,13 +732,28 @@ def compare_code(scanned_code: str):
     last_processed = base_b_times[-1] if base_b_times else None
     processed_count = len(base_b_times)
 
-    status = 'ENCONTRADO NAS DUAS'
-    if not base_a_rows and not base_b_rows:
+    has_a = bool(base_a_rows)
+    has_b = bool(base_b_rows)
+    has_c = bool(base_c_rows)
+
+    if not has_a and not has_b and not has_c:
         status = 'NAO ENCONTRADO'
-    elif base_a_rows and not base_b_rows:
+    elif has_a and has_b and has_c:
+        status = 'ENCONTRADO NOS TRES'
+    elif has_a and has_b:
+        status = 'ENCONTRADO NAS DUAS'
+    elif has_a and not has_b and not has_c:
         status = 'SOMENTE NO ARQUIVO A'
-    elif not base_a_rows and base_b_rows:
+    elif not has_a and has_b and not has_c:
         status = 'SOMENTE NO ARQUIVO B'
+    elif not has_a and not has_b and has_c:
+        status = 'SOMENTE NO ARQUIVO C'
+    elif has_a and has_c and not has_b:
+        status = 'ARQUIVO A E C'
+    elif has_b and has_c and not has_a:
+        status = 'ARQUIVO B E C'
+    else:
+        status = 'LOCALIZADO PARCIALMENTE'
 
     delta_first = _minutes_between(first_entry, first_processed)
     delta_last = _minutes_between(first_entry, last_processed)
@@ -673,7 +774,21 @@ def compare_code(scanned_code: str):
         'Shipment Time -> Signed for': delta_shipment_signed_sec,
     }
 
-    sla_elapsed_seconds = _seconds_between(min_creation_iso, scanned_at_iso)
+    sla_start_iso = None
+    sla_base = '-'
+
+    if min_creation_iso:
+        sla_start_iso = min_creation_iso
+        sla_base = 'Min Creation Time (Arquivo A) -> Scanned At'
+    elif creation_iso:
+        sla_start_iso = creation_iso
+        sla_base = 'Creation Time (Arquivo A) -> Scanned At'
+    elif base_c_times:
+        sla_start_iso = base_c_times[0]
+        sla_base = 'Operation Time (Arquivo C) -> Scanned At'
+
+    sla_elapsed_seconds = _seconds_between(sla_start_iso, scanned_at_iso)
+
     sla_info = _sla_analysis(
         process_deltas_seconds=process_deltas_seconds,
         total_process_seconds=sla_elapsed_seconds,
@@ -683,11 +798,15 @@ def compare_code(scanned_code: str):
     details = {
         'base_a_times': [_fmt_iso(x) for x in base_a_times],
         'base_b_times': [_fmt_iso(x) for x in base_b_times],
+        'base_c_times': [_fmt_iso(x) for x in base_c_times],
         'base_a_rows': base_a_rows,
         'base_b_rows': base_b_rows,
+        'base_c_rows': base_c_rows,
         'base_a_label': 'Arquivo A',
         'base_b_label': 'Arquivo B',
+        'base_c_label': 'Arquivo C',
         'matched_code_norm': code_norm,
+        'package_code_norm': package_code_norm,
         'process_times_a': {
             'Creation Time': _fmt_iso(creation_iso),
             'Closing Time': _fmt_iso(closing_iso),
@@ -701,7 +820,7 @@ def compare_code(scanned_code: str):
             'Closing Time -> Shipment Time (min)': delta_closing_shipment,
             'Shipment Time -> Signed for (min)': delta_shipment_signed,
             'Creation Time -> Signed for (min)': delta_creation_signed,
-            'Min Creation Time -> Scanned At (min)': _minutes_between(min_creation_iso, scanned_at_iso),
+            'Min Creation Time -> Scanned At (min)': _minutes_between(sla_start_iso, scanned_at_iso),
         },
         'process_deltas_a_human': {
             'Creation Time -> Closing Time': _format_duration(delta_creation_closing_sec),
@@ -719,9 +838,9 @@ def compare_code(scanned_code: str):
         },
         'sla_info': {
             **sla_info,
-            'sla_start': _fmt_iso(min_creation_iso),
+            'sla_start': _fmt_iso(sla_start_iso),
             'sla_end': _fmt_iso(scanned_at_iso),
-            'sla_base': 'Min Creation Time -> Scanned At',
+            'sla_base': sla_base,
         }
     }
 
@@ -729,15 +848,17 @@ def compare_code(scanned_code: str):
     db.execute(
         '''
         INSERT INTO scans (
-            scanned_code, code_norm, scanned_at, status, first_entry_iso,
-            first_processed_iso, last_processed_iso, processed_count,
+            scanned_code, package_code, code_norm, package_code_norm, scanned_at, status,
+            first_entry_iso, first_processed_iso, last_processed_iso, processed_count,
             delta_first_minutes, delta_last_minutes, details_json
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
         (
             scanned_code,
+            package_code or None,
             code_norm,
+            package_code_norm or None,
             scanned_at_dt.strftime('%Y-%m-%d %H:%M:%S'),
             status,
             first_entry,
@@ -788,6 +909,7 @@ def get_recent_scans(limit=100):
         items.append({
             'id': r['id'],
             'scanned_code': r['scanned_code'],
+            'package_code': r['package_code'],
             'scanned_at': r['scanned_at'],
             'status': r['status'],
             'first_entry': _fmt_iso(r['first_entry_iso']),
@@ -818,6 +940,7 @@ def get_latest_result():
 
     return {
         'scanned_code': r['scanned_code'],
+        'package_code': r['package_code'],
         'status': r['status'],
         'first_entry': r['first_entry'],
         'first_processed': r['first_processed'],
@@ -901,6 +1024,12 @@ def setup():
     return render_template('setup.html')
 
 
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(e):
+    flash("Arquivo muito grande. O limite permitido é de 100 MB.", "danger")
+    return redirect(url_for('index'))
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if not has_any_user():
@@ -955,9 +1084,10 @@ def index():
 def upload():
     arquivo_a = request.files.get('arquivo_a')
     arquivo_b = request.files.get('arquivo_b')
+    arquivo_c = request.files.get('arquivo_c')
 
     if not arquivo_a or not arquivo_a.filename or not arquivo_b or not arquivo_b.filename:
-        flash('Envie os dois arquivos Excel.', 'warning')
+        flash('Envie pelo menos os arquivos A e B.', 'warning')
         return redirect(url_for('index'))
 
     try:
@@ -973,6 +1103,15 @@ def upload():
             request.form.get('code_column_b') or None,
             request.form.get('time_column_b') or None
         )
+
+        if arquivo_c and arquivo_c.filename:
+            store_uploaded_excel(
+                'BASE_C',
+                arquivo_c,
+                request.form.get('code_column_c') or None,
+                request.form.get('time_column_c') or None
+            )
+
         flash('Bases importadas com sucesso.', 'success')
     except Exception as e:
         flash(f'Erro ao importar as planilhas: {e}', 'danger')
@@ -984,14 +1123,18 @@ def upload():
 @login_required
 def scan():
     scanned_code = (request.form.get('scanned_code') or '').strip()
+    package_code = (request.form.get('package_code') or '').strip()
 
     if not scanned_code:
         flash('Informe um código antes de processar.', 'warning')
         return redirect(url_for('index'))
 
     try:
-        compare_code(scanned_code)
-        flash(f'Comparativo executado para o código {scanned_code}.', 'success')
+        compare_code(scanned_code, package_code)
+        if package_code:
+            flash(f'Comparativo executado para o código {scanned_code} e pacote {package_code}.', 'success')
+        else:
+            flash(f'Comparativo executado para o código {scanned_code}.', 'success')
     except Exception as e:
         flash(f'Erro ao processar o código: {e}', 'danger')
 
@@ -1035,7 +1178,9 @@ def export_scans_excel():
 
         data.append({
             'Codigo': r['scanned_code'],
+            'CodigoPacote': r['package_code'],
             'CodigoNormalizado': r['code_norm'],
+            'CodigoPacoteNormalizado': r['package_code_norm'],
             'BipadoEm': r['scanned_at'],
             'Status': r['status'],
             'PrimeiraEntradaArquivoA': _fmt_iso(r['first_entry_iso']),
@@ -1046,6 +1191,7 @@ def export_scans_excel():
             'DeltaUltimoMin': r['delta_last_minutes'],
             'HorariosArquivoA': ' | '.join(details.get('base_a_times', [])),
             'HorariosArquivoB': ' | '.join(details.get('base_b_times', [])),
+            'HorariosArquivoC': ' | '.join(details.get('base_c_times', [])),
 
             'Creation Time': process_times_a.get('Creation Time'),
             'Closing Time': process_times_a.get('Closing Time'),
@@ -1105,9 +1251,11 @@ def export_comparison_excel():
 
         base_a_rows = details.get('base_a_rows', [])
         base_b_rows = details.get('base_b_rows', [])
+        base_c_rows = details.get('base_c_rows', [])
 
         base_a_first = base_a_rows[0] if base_a_rows else {}
         base_b_first = base_b_rows[0] if base_b_rows else {}
+        base_c_first = base_c_rows[0] if base_c_rows else {}
 
         process_times_a = details.get('process_times_a', {})
         process_deltas_a = details.get('process_deltas_a', {})
@@ -1116,7 +1264,9 @@ def export_comparison_excel():
 
         item = {
             'Codigo': r['scanned_code'],
+            'CodigoPacote': r['package_code'],
             'CodigoNormalizado': r['code_norm'],
+            'CodigoPacoteNormalizado': r['package_code_norm'],
             'Status': r['status'],
             'PrimeiraEntradaArquivoA': _fmt_iso(r['first_entry_iso']),
             'PrimeiroRegistroArquivoB': _fmt_iso(r['first_processed_iso']),
@@ -1161,6 +1311,9 @@ def export_comparison_excel():
 
         for k, v in base_b_first.items():
             item[f'B - {k}'] = v
+
+        for k, v in base_c_first.items():
+            item[f'C - {k}'] = v
 
         data.append(item)
 
